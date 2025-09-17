@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Happy Birthday — 3D</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --accent1:#ff6b6b;
+      --accent2:#ffd166;
+      --shadow-color: rgba(8,10,20,0.7);
+    }
+    html,body{height:100%;margin:0;font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    body{
+      background: radial-gradient(1200px 600px at 10% 10%, #0b1220 0%, var(--bg) 30%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
+      display:flex;align-items:center;justify-content:center;overflow:hidden;color:white;
+    }
+
+    .stage{
+      perspective: 1200px;
+      text-align:center;
+      --depth: 16; /* how many layers for faux 3D */
+    }
+
+    .card{
+      transform-style:preserve-3d;
+      display:inline-block;
+      padding:40px 48px;
+      border-radius:20px;
+      backdrop-filter: blur(6px) saturate(120%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 20px 40px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+
+    .happy{
+      position:relative;
+      display:inline-block;
+      font-size: clamp(36px, 9vw, 120px);
+      line-height:0.9;
+      font-weight:800;
+      letter-spacing: -0.02em;
+      transform-origin:50% 50%;
+      will-change:transform;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .layer{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;}
+
+    .face{
+      position:relative;
+      z-index: calc(var(--depth) + 10);
+      background: linear-gradient(90deg,var(--accent1),var(--accent2));
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+      filter: drop-shadow(0 8px 18px rgba(3,6,23,0.6));
+      transform: translateZ( calc(var(--depth) * 1px) );
+    }
+
+    .extrude{color:transparent; -webkit-text-stroke: 1px rgba(0,0,0,0.4);}
+
+    .extrude span{
+      display:block;position:relative;transform-style:preserve-3d;
+    }
+
+    .slice{
+      transform-origin:center;
+      -webkit-text-stroke:0;
+      color: transparent;
+      mix-blend-mode: normal;
+    }
+
+    .glow{
+      position:absolute;inset:0;filter:blur(40px);opacity:0.65;z-index:0;
+      background: radial-gradient(30% 30% at 20% 30%, rgba(255,107,107,0.18), transparent 20%), radial-gradient(25% 25% at 80% 70%, rgba(255,209,102,0.12), transparent 20%);
+    }
+
+    @keyframes float{
+      0%{transform: translateY(0) rotateX(0.6deg) rotateZ(-1deg)}
+      50%{transform: translateY(-12px) rotateX(0.8deg) rotateZ(1deg)}
+      100%{transform: translateY(0) rotateX(0.6deg) rotateZ(-1deg)}
+    }
+
+    @media (prefers-reduced-motion:reduce){.happy{animation:none}}
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="card">
+      <div class="happy" aria-hidden="false" id="happy">
+        <div class="glow"></div>
+        <div style="position:relative;display:inline-block;padding:0;margin:0;">
+          <div id="slicesRoot" style="position:relative;display:inline-block"></div>
+          <div class="layer face" id="frontFace">Happy Birthday</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const root = document.getElementById('slicesRoot');
+    const front = document.getElementById('frontFace');
+
+    const DEPTH = 22;
+    const OFFSET = 1.6;
+
+    function build(text){
+      root.innerHTML = '';
+      for(let i=DEPTH; i>0; i--){
+        const slice = document.createElement('div');
+        slice.className = 'layer slice';
+        slice.style.zIndex = i;
+        const z = i * -OFFSET;
+        const x = Math.sin(i*0.25) * (i*0.08);
+        const y = -i * 0.18;
+        slice.style.transform = `translate3d(${x}px, ${y}px, ${z}px)`;
+        slice.style.opacity = `${0.9 - (i/ (DEPTH*1.4))}`;
+        slice.style.webkitTextStroke = '0px';
+        slice.style.webkitBackgroundClip = 'text';
+        slice.style.backgroundClip = 'text';
+        slice.style.color = 'rgba(0,0,0,' + (0.35 + i/ (DEPTH*1.6)) + ')';
+        slice.textContent = text;
+        slice.style.fontWeight = 800;
+        slice.style.fontSize = 'inherit';
+        slice.style.letterSpacing = '-0.02em';
+        root.appendChild(slice);
+      }
+      front.textContent = text;
+    }
+
+    build('Happy Birthday Nanna');
+
+    const stage = document.querySelector('.stage');
+    const card = document.querySelector('.card');
+    stage.addEventListener('pointermove', (e)=>{
+      const rect = stage.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top + rect.height/2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const rx = (dy / rect.height) * 10;
+      const ry = -(dx / rect.width) * 10;
+      card.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    });
+    stage.addEventListener('pointerleave', ()=>{ card.style.transform = 'rotateX(0deg) rotateY(0deg)'; });
+  </script>
+</body>
+</html>
